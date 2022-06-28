@@ -401,6 +401,7 @@ static server_value_t	printer_values[] =	/* Value tags for printer create/set at
   { "trimming-type-supported",			IPP_TAG_KEYWORD, IPP_TAG_ZERO, VALUE_1SETOF },
   { "trimming-when-supported",			IPP_TAG_KEYWORD, IPP_TAG_ZERO, VALUE_1SETOF },
   { "urf-supported",				IPP_TAG_KEYWORD, IPP_TAG_ZERO, VALUE_1SETOF },
+  { "faxout-supported",				IPP_TAG_KEYWORD, IPP_TAG_ZERO, VALUE_1SETOF },
   { "x-image-position-default",			IPP_TAG_KEYWORD, IPP_TAG_ZERO, VALUE_NORMAL },
   { "x-image-position-supported",		IPP_TAG_KEYWORD, IPP_TAG_ZERO, VALUE_1SETOF },
   { "x-image-shift-default",			IPP_TAG_INTEGER, IPP_TAG_ZERO, VALUE_NORMAL },

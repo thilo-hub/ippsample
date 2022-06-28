@@ -2169,6 +2169,7 @@ serverRegisterPrinter(
 			*printer_more_info,
 			*printer_uuid,
 			*sides_supported,
+			*faxout_supported,
 			*urf_supported;	/* Printer attributes */
   const char		*value;		/* Value string */
   char			formats[252],	/* List of supported formats */
@@ -2196,6 +2197,8 @@ serverRegisterPrinter(
   printer_uuid              = ippFindAttribute(printer->pinfo.attrs, "printer-uuid", IPP_TAG_URI);
   sides_supported           = ippFindAttribute(printer->pinfo.attrs, "sides-supported", IPP_TAG_KEYWORD);
   urf_supported             = ippFindAttribute(printer->pinfo.attrs, "urf-supported", IPP_TAG_KEYWORD);
+  faxout_supported          = ippFindAttribute(printer->pinfo.attrs, "faxout-supported", IPP_TAG_KEYWORD);
+fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
 
   for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
   {
@@ -2249,8 +2252,32 @@ serverRegisterPrinter(
  /*
   * Build the TXT record for IPP...
   */
+//+ "TLS=1.2"
+//+  "UUID=81d88363-332b-308f-749e-bfae8eb643ac"
+//+  "URF=W8,SRGB24,ADOBERGB24-48,DM3,CP255,OFU0,IS1-4-5-7,IFU0,MT1-2-3-7-8-9-10-11-12,OB9,PQ3-4-5,RS300-600,V1.4"
+//-  "pdl=image/urf,i//mage/jpeg"
+//-  "rfo=ipp/faxout"
+//-  "Fax=T"
+//-  "Scan=F"
+//-  "Sort=F"
+//-  "Bind=F"
+//-  "Punch=0"
+//-  "Collate=F"
+//-  "Copies=T"
+//-  "Staple=F"
+//+  "Duplex=T"
+//+  "Color=T"
+//-  "product=(Simulated 2-Sided InkJet)"
+//-  "priority=0"
+//-  "PaperMax=<legal-A4"
+//+  "note=ThilosMacBookM1 (6)"
+//+  "kind=photo,envelope,document"
+//+  "adminurl=http://thilosmcbookm13.nispuk.com:8632/"
+//+  "ty=Simulated 2-Sided InkJet"
+//+  "rp=ipp/print/inkjet2"
+//+  "qtotal=1"
+//+  "txtvers=1"]
 
-#Error
   TXTRecordCreate(&ipp_txt, 1024, NULL);
   TXTRecordSetValue(&ipp_txt, "rp", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
   if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
@@ -2268,6 +2295,14 @@ serverRegisterPrinter(
   {
     TXTRecordSetValue(&ipp_txt, "Color", 1, ippGetBoolean(color_supported, 0) ? "T" : "F");
     TXTRecordSetValue(&ipp_txt, "Duplex", 1, ippGetCount(sides_supported) > 1 ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Fax", 1, ippGetBoolean(faxout_supported, 0) ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Scan", 1, false ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Sort", 1, false ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Bind", 1, false ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Punch", 1, "0");
+    TXTRecordSetValue(&ipp_txt, "Collate", 1, false ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Copies", 1, false ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Staple", 1, false ? "T" : "F");
   }
 
   if (!is_print3d && Encryption != HTTP_ENCRYPTION_NEVER)
@@ -2283,8 +2318,9 @@ serverRegisterPrinter(
   */
 
   printer->printer_ref = DNSSDMaster;
-
-  if ((error = DNSServiceRegister(&(printer->printer_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, "_printer._tcp", NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
+  //char *subtype = "_universal._sub";
+  char *subtype = "_printer._tcp";
+  if ((error = DNSServiceRegister(&(printer->printer_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, subtype, NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
   {
     serverLogPrinter(SERVER_LOGLEVEL_ERROR, printer, "Unable to register \"%s._printer._tcp\": %d", printer->dns_sd_name, error);
     return (0);

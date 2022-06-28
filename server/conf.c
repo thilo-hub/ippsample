@@ -1610,6 +1610,7 @@ create_system_attributes(void)
     "trimming-reference-edge-supported",
     "trimming-type-supported",
     "trimming-when-supported",
+    "faxout-supported",
     "urf-supported",
     "x-image-position-default",
     "x-image-position-supported",
