@@ -3112,6 +3112,7 @@ token_cb(ipp_file_t     *f,		/* I - IPP file data */
   char	temp[1024],			/* Temporary string */
 	value[1024];			/* Value string */
 
+fprintf(stderr,"THILO: cb: %s\n",token);
 
 #ifndef _WIN32
   if (!strcasecmp(token, "AuthPrintGroup"))

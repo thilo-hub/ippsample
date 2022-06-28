@@ -786,6 +786,8 @@ serverCreatePrinter(
     "top"
   };
 
+//fprintf(stderr,"THILO: Resource: %s\n",resource);
+//fprintf(stderr,"THILO: Name: %s\n",name);
  { ipp_attribute_t *dns_sd_name = ippFindAttribute(pinfo->attrs, "printer-dns-sd-name", IPP_TAG_NAME);
    const char *value;
   if ((value = ippGetString(dns_sd_name, 0, NULL)) != NULL)
@@ -979,7 +981,6 @@ serverCreatePrinter(
   for (attr = ippFirstAttribute(printer->pinfo.attrs); attr; attr = ippNextAttribute(printer->pinfo.attrs))
   {
     const char *attrname = ippGetName(attr);/* Attribute name */
-
     if (attrname)
       cupsArrayAdd(existing, (void *)attrname);
   }
@@ -2203,6 +2204,8 @@ serverRegisterPrinter(
   sides_supported           = ippFindAttribute(printer->pinfo.attrs, "sides-supported", IPP_TAG_KEYWORD);
   urf_supported             = ippFindAttribute(printer->pinfo.attrs, "urf-supported", IPP_TAG_KEYWORD);
   faxout_supported          = ippFindAttribute(printer->pinfo.attrs, "faxout-supported", IPP_TAG_BOOLEAN);
+//fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
+//fprintf(stderr,"THILO:  dns-sd: %x\n",dns_sd_name);
 
   for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
   {
@@ -2283,7 +2286,12 @@ serverRegisterPrinter(
 //+  "txtvers=1"]
 
   TXTRecordCreate(&ipp_txt, 1024, NULL);
-  TXTRecordSetValue(&ipp_txt, "rp", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
+  { char *rp=printer->resource+1;
+  if (strcmp(rp,"ipp/faxout") == 0)
+	rp="ipp/print/faxer";
+ 
+  //TXTRecordSetValue(&ipp_txt, "rp", (uint8_t)strlen(rp), rp);
+  }
   if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
     TXTRecordSetValue(&ipp_txt, "ty", (uint8_t)strlen(value), value);
   if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
@@ -2329,6 +2337,7 @@ serverRegisterPrinter(
 
   printer->printer_ref = DNSSDMaster;
   //char *subtype = "_universal._sub";
+fprintf(stderr,"THILO:  dns-sd: %s\n",printer->dns_sd_name);
   char *subtype = "_printer._tcp";
   if ((error = DNSServiceRegister(&(printer->printer_ref), kDNSServiceFlagsShareConnection, 0 /* interfaceIndex */, printer->dns_sd_name, subtype, NULL /* domain */, NULL /* host */, 0 /* port */, 0 /* txtLen */, NULL /* txtRecord */, (DNSServiceRegisterReply)dnssd_callback, printer)) != kDNSServiceErr_NoError)
   {
