@@ -1206,7 +1206,7 @@ attr_cb(ipp_file_t     *f,		/* I - IPP file */
     "printer-config-change-time",
     "printer-current-time",
     "printer-detailed-status-messages",
-    "printer-dns-sd-name",
+    //"printer-dns-sd-name",
     //"printer-fax-log-uri",
     "printer-get-attributes-supported",
     "printer-icons",

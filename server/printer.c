@@ -786,6 +786,11 @@ serverCreatePrinter(
     "top"
   };
 
+ { ipp_attribute_t *dns_sd_name = ippFindAttribute(pinfo->attrs, "printer-dns-sd-name", IPP_TAG_NAME);
+   const char *value;
+  if ((value = ippGetString(dns_sd_name, 0, NULL)) != NULL)
+	   name = strdup(value);
+ }
 
   serverLog(SERVER_LOGLEVEL_DEBUG, "serverCreatePrinter(resource=\"%s\", name=\"%s\", pinfo=%p)", resource, name, (void *)pinfo);
 
@@ -2197,8 +2202,7 @@ serverRegisterPrinter(
   printer_uuid              = ippFindAttribute(printer->pinfo.attrs, "printer-uuid", IPP_TAG_URI);
   sides_supported           = ippFindAttribute(printer->pinfo.attrs, "sides-supported", IPP_TAG_KEYWORD);
   urf_supported             = ippFindAttribute(printer->pinfo.attrs, "urf-supported", IPP_TAG_KEYWORD);
-  faxout_supported          = ippFindAttribute(printer->pinfo.attrs, "faxout-supported", IPP_TAG_KEYWORD);
-fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
+  faxout_supported          = ippFindAttribute(printer->pinfo.attrs, "faxout-supported", IPP_TAG_BOOLEAN);
 
   for (i = 0, count = ippGetCount(document_format_supported), ptr = formats; i < count; i ++)
   {
@@ -2256,15 +2260,15 @@ fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
 //+  "UUID=81d88363-332b-308f-749e-bfae8eb643ac"
 //+  "URF=W8,SRGB24,ADOBERGB24-48,DM3,CP255,OFU0,IS1-4-5-7,IFU0,MT1-2-3-7-8-9-10-11-12,OB9,PQ3-4-5,RS300-600,V1.4"
 //-  "pdl=image/urf,i//mage/jpeg"
-//-  "rfo=ipp/faxout"
-//-  "Fax=T"
-//-  "Scan=F"
-//-  "Sort=F"
-//-  "Bind=F"
-//-  "Punch=0"
-//-  "Collate=F"
-//-  "Copies=T"
-//-  "Staple=F"
+//+  "rfo=ipp/faxout"
+//+  "Fax=T"
+//+  "Scan=F"
+//+  "Sort=F"
+//+  "Bind=F"
+//+  "Punch=0"
+//+  "Collate=F"
+//+  "Copies=T"
+//+  "Staple=F"
 //+  "Duplex=T"
 //+  "Color=T"
 //-  "product=(Simulated 2-Sided InkJet)"
@@ -2301,9 +2305,15 @@ fprintf(stderr,"THILO:  faxout: %x\n",faxout_supported);
     TXTRecordSetValue(&ipp_txt, "Bind", 1, false ? "T" : "F");
     TXTRecordSetValue(&ipp_txt, "Punch", 1, "0");
     TXTRecordSetValue(&ipp_txt, "Collate", 1, false ? "T" : "F");
-    TXTRecordSetValue(&ipp_txt, "Copies", 1, false ? "T" : "F");
+    TXTRecordSetValue(&ipp_txt, "Copies", 1, true ? "T" : "F");
     TXTRecordSetValue(&ipp_txt, "Staple", 1, false ? "T" : "F");
   }
+
+  { char *product="(My Printer)";
+  TXTRecordSetValue(&ipp_txt, "product", (uint8_t)strlen(product), product);
+  }
+  if (ippGetBoolean(faxout_supported, 0)) 
+	  TXTRecordSetValue(&ipp_txt, "rfo", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
 
   if (!is_print3d && Encryption != HTTP_ENCRYPTION_NEVER)
     TXTRecordSetValue(&ipp_txt, "TLS", 3, "1.2");
