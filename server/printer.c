@@ -1524,7 +1524,9 @@ serverCreatePrinter(
 
   /* printer-geo-location */
   if (!cupsArrayFind(existing, (void *)"printer-geo-location"))
+  { fprintf(stderr,"Added geo loc\n");
     ippAddOutOfBand(printer->pinfo.attrs, IPP_TAG_PRINTER, IPP_TAG_UNKNOWN, "printer-geo-location");
+    }
 
   /* printer-icc-profiles */
   if (!cupsArrayFind(existing, (void *)"printer-icc-profiles") && printer->pinfo.profiles)
@@ -2248,6 +2250,7 @@ serverRegisterPrinter(
   * Build the TXT record for IPP...
   */
 
+#Error
   TXTRecordCreate(&ipp_txt, 1024, NULL);
   TXTRecordSetValue(&ipp_txt, "rp", (uint8_t)strlen(printer->resource) - 1, printer->resource + 1);
   if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
@@ -2358,29 +2361,91 @@ serverRegisterPrinter(
   */
 
   ipp_txt = NULL;
-  ipp_txt = avahi_string_list_add_printf(ipp_txt, "rp=%s", printer->resource + 1);
-  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "ty=%s", value);
-  if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "adminurl=%s", value);
-  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "note=%s", value);
-  ipp_txt = avahi_string_list_add_printf(ipp_txt, "pdl=%s", formats);
-  if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "UUID=%s", value + 9);
-
-  if (!is_print3d)
-  {
-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
-    ipp_txt = avahi_string_list_add_printf(ipp_txt, "Duplex=%s", ippGetCount(sides_supported) > 1 ? "T" : "F");
-  }
+fprintf(stderr,"R: %s\n",printer->resource+1);
+//# "TLS=1.2"
+//#  "UUID=81d88363-332b-308f-749e-bfae8eb643ac"
+//#  "URF=W8,SRGB24,ADOBERGB24-48,DM3,CP255,OFU0,IS1-4-5-7,IFU0,MT1-2-3-7-8-9-10-11-12,OB9,PQ3-4-5,RS300-600,V1.4"
+//#  "pdl=image/urf,i//mage/jpeg"
+//#  "rfo=ipp/faxout"
+//#  "Fax=T"
+//#  "Scan=F"
+//#  "Sort=F"
+//#  "Bind=F"
+//#  "Punch=0"
+//#  "Collate=F"
+//#  "Copies=T"
+//#  "Staple=F"
+//#  "Duplex=T"
+//#  "Color=T"
+//#  "product=(Simulated 2-Sided InkJet)"
+//#  "priority=0"
+//#  "PaperMax=<legal-A4"
+//#  "note=ThilosMacBookM1 (6)"
+//#  "kind=photo,envelope,document"
+//#  "adminurl=http://thilosmcbookm13.nispuk.com:8632/"
+//#  "ty=Simulated 2-Sided InkJet"
+//#  "rp=ipp/print/inkjet2"
+//#  "qtotal=1"
+//#  "txtvers=1"]
 
   if (!is_print3d && Encryption != HTTP_ENCRYPTION_NEVER)
     ipp_txt = avahi_string_list_add_printf(ipp_txt, "TLS=1.2");
+
+  if ((value = ippGetString(printer_uuid, 0, NULL)) != NULL)
+    ipp_txt = avahi_string_list_add_printf(ipp_txt, "UUID=%s", value + 9);
+
   if (urf[0])
     ipp_txt = avahi_string_list_add_printf(ipp_txt, "URF=%s", urf);
+
+  ipp_txt = avahi_string_list_add_printf(ipp_txt, "pdl=%s", formats);
+  if (!is_print3d)
+  {
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "rfo=%s", "/ipp/faxout");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Fax=%s", true ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Scan=%s", false ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Sort=%s", false ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Bind=%s", false ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Punch=%d", 0);
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Collate=%s", false ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Copies=%s", false ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Staple=%s", false ? "T" : "FT");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Duplex=%s", ippGetCount(sides_supported) > 1 ? "T" : "F");
+
+	  ipp_txt = avahi_string_list_add_printf(ipp_txt, "Color=%s", ippGetBoolean(color_supported, 0) ? "T" : "F");
+  }
+
+  ipp_txt = avahi_string_list_add_printf(ipp_txt, "product=(ThiloPrint))");
+
+  ipp_txt = avahi_string_list_add_printf(ipp_txt, "priority=%d", 0);
+
+  ipp_txt = avahi_string_list_add_printf(ipp_txt, "PaperMax=%s","<legal-A4");
+
+  if ((value = ippGetString(printer_location, 0, NULL)) != NULL)
+    ipp_txt = avahi_string_list_add_printf(ipp_txt, "note=%s", value);
+
+  ipp_txt = avahi_string_list_add_printf(ipp_txt, "kind=%s","document");
+
+  if ((value = ippGetString(printer_more_info, 0, NULL)) != NULL)
+    ipp_txt = avahi_string_list_add_printf(ipp_txt, "adminurl=%s", value);
+
+  if ((value = ippGetString(printer_make_and_model, 0, NULL)) != NULL)
+    ipp_txt = avahi_string_list_add_printf(ipp_txt, "ty=%s", value);
+
+  ipp_txt = avahi_string_list_add_printf(ipp_txt, "rp=%s", printer->resource + 1);
+
   ipp_txt = avahi_string_list_add_printf(ipp_txt, "txtvers=1");
   ipp_txt = avahi_string_list_add_printf(ipp_txt, "qtotal=1");
+
 
  /*
   * Register _printer._tcp (LPD) with port 0 to reserve the service name...

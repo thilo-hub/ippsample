@@ -567,10 +567,10 @@ process_attr_message(
  /*
   * Loop through the options and record them in the printer or job objects...
   */
-
   for (i = num_options, option = options; i > 0; i --, option ++)
   {
     serverLogJob(SERVER_LOGLEVEL_DEBUG, job, "options[%u].name=\"%s\", .value=\"%s\"", (unsigned)(num_options - i), option->name, option->value);
+  fprintf(stderr,"THILO: " __FILE__ ":%d  Got:%s\n",__LINE__,option->name);
 
     if (!strcmp(option->name, "job-impressions"))
     {
@@ -688,6 +688,7 @@ process_state_message(
   * Keywords may or may not have a suffix (-report, -warning, -error) per
   * RFC 8011.
   */
+  fprintf(stderr,"THILO: " __FILE__ ":%d  Got:%s\n",__LINE__,message);
 
   if (*message == '-')
   {
@@ -726,8 +727,11 @@ process_state_message(
       }
     }
 
-    if ((ptr = strstr(message, "-error")) != NULL)
+    if ((ptr = strstr(message, "-error")) != NULL){
       *ptr = '\0';
+  fprintf(stderr,"THILO: " __FILE__ ":%d  ABORT\n",__LINE__);
+  	job->state = IPP_JSTATE_ABORTED;
+      }
     else if ((ptr = strstr(message, "-report")) != NULL)
       *ptr = '\0';
     else if ((ptr = strstr(message, "-warning")) != NULL)

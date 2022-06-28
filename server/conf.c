@@ -225,11 +225,87 @@ serverCreateSystem(
 
         if (serverLoadAttributes(filename, &pinfo))
 	{
-          //snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
-	  if (!strcmp(dent->filename,"faxout"))
-		  snprintf(resource, sizeof(resource), "/ipp/%s", dent->filename);
-	  else
-		  snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
+	  snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
+
+	  if ((printer = serverCreatePrinter(resource, dent->filename, dent->filename, &pinfo, 0)) == NULL)
+            continue;
+
+          printer->state         = pinfo.initial_state;
+          printer->state_reasons = pinfo.initial_reasons;
+          printer->is_accepting  = pinfo.initial_accepting;
+
+          serverAddPrinter(printer);
+	}
+      }
+      else if (strcmp(ptr, ".png") && strcmp(ptr, ".strings"))
+        serverLog(SERVER_LOGLEVEL_INFO, "Skipping \"%s\".", dent->filename);
+    }
+
+    cupsDirClose(dir);
+  }
+ /*
+  * Then see if there are any faxout queues...
+  */
+
+  if (StateDirectory)
+  {
+   /*
+    * See if we have saved printer state information...
+    */
+
+    snprintf(confdir, sizeof(confdir), "%s/faxout", StateDirectory);
+
+    if (access(confdir, 0))
+      snprintf(confdir, sizeof(confdir), "%s/faxout", directory);
+  }
+  else
+    snprintf(confdir, sizeof(confdir), "%s/faxout", directory);
+
+  if ((dir = cupsDirOpen(confdir)) != NULL)
+  {
+    serverLog(SERVER_LOGLEVEL_INFO, "Loading printers from \"%s\".", filename);
+
+    while ((dent = cupsDirRead(dir)) != NULL)
+    {
+      if ((ptr = strrchr(dent->filename, '.')) == NULL)
+        ptr = "";
+
+      if (!strcmp(ptr, ".conf"))
+      {
+       /*
+        * Load the conf file, with any associated icon image.
+        */
+
+        serverLog(SERVER_LOGLEVEL_INFO, "Loading printer from \"%s\".", dent->filename);
+
+        snprintf(filename, sizeof(filename), "%s/%s", confdir, dent->filename);
+        *ptr = '\0';
+
+        memset(&pinfo, 0, sizeof(pinfo));
+
+        pinfo.print_group       = SERVER_GROUP_NONE;
+	pinfo.proxy_group       = SERVER_GROUP_NONE;
+	pinfo.initial_accepting = 1;
+	pinfo.initial_state     = IPP_PSTATE_IDLE;
+	pinfo.initial_reasons   = SERVER_PREASON_NONE;
+        pinfo.web_forms         = 1;
+
+        snprintf(iconname, sizeof(iconname), "%s/%s.png", confdir, dent->filename);
+        if (!access(iconname, R_OK))
+        {
+          pinfo.icon = strdup(iconname);
+	}
+	else if (StateDirectory)
+	{
+	  snprintf(iconname, sizeof(iconname), "%s/faxout/%s.png", directory, dent->filename);
+	  if (!access(iconname, R_OK))
+	    pinfo.icon = strdup(iconname);
+	}
+
+        if (serverLoadAttributes(filename, &pinfo))
+	{
+	  // not sure if other faxes can be installed, for the moment only /faxout exists 
+	  snprintf(resource, sizeof(resource), "/ipp/faxout");
 
 	  if ((printer = serverCreatePrinter(resource, dent->filename, dent->filename, &pinfo, 0)) == NULL)
             continue;
