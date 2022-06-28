@@ -1508,7 +1508,19 @@ serverCreatePrinter(
   }
 
   /* printer-get-attributes-supported */
+#if 0
   ippAddString(printer->pinfo.attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported", NULL, "document-format");
+#else
+  if (!cupsArrayFind(existing, (void *)"printer-get-attributes-supported"))
+  { 
+    static const char * const names[] =	/* Attributes needed for PIN printing */
+    {
+      "destination-uri"
+      ,"document-format"
+    };
+    ippAddStrings(printer->pinfo.attrs, IPP_TAG_PRINTER, IPP_CONST_TAG(IPP_TAG_KEYWORD), "printer-get-attributes-supported",(int)(sizeof(names) / sizeof(names[0])), NULL, names);
+  }
+#endif
 
   /* printer-geo-location */
   if (!cupsArrayFind(existing, (void *)"printer-geo-location"))

@@ -5859,6 +5859,7 @@ ipp_register_output_device(
       pinfo.proxy_group = AuthProxyGroup;
       pinfo.max_devices = 1;
 
+      exit(99);
       snprintf(path, sizeof(path), "/ipp/print/%s", uuid + 9);
       printer = client->printer = serverCreatePrinter(path, uuid + 9, uuid + 9, &pinfo, 0);
 
@@ -8262,7 +8263,6 @@ serverProcessIPP(
 
     attr = ippNextAttribute(client->request);
     name = ippGetName(attr);
-
     if (attr && name && (!strcmp(name, "system-uri") || !strcmp(name, "printer-uri") || !strcmp(name, "job-uri")) && ippGetGroupTag(attr) == IPP_TAG_OPERATION && ippGetValueTag(attr) == IPP_TAG_URI)
       uri = attr;
     else
@@ -8329,8 +8329,9 @@ serverProcessIPP(
 	* Validate job-uri...
 	*/
 
-	if (strncmp(resource, "/ipp/print/", 11))
+	if (strncmp(resource, "/ipp/print/", 11) && strncmp(resource, "/ipp/faxout/",12))
 	{
+
 	  serverRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "\"%s\" '%s' not found.", name, ippGetString(uri, 0, NULL));
 	  goto send_response;
 	}
@@ -8339,12 +8340,12 @@ serverProcessIPP(
 	 /*
 	  * Strip job-id from resource...
 	  */
-
-	  if ((resptr = strchr(resource + 11, '/')) != NULL)
+	  if ( !strncmp(resource,"/ipp/faxout/",12) )
+	      resource[11] = '\0';
+	  else if ((resptr = strchr(resource + 11, '/')) != NULL)
 	    *resptr = '\0';
 	  else
 	    resource[10] = '\0';
-
 	  if ((client->printer = serverFindPrinter(resource)) == NULL)
 	  {
 	    serverRespondIPP(client, IPP_STATUS_ERROR_NOT_FOUND, "\"%s\" '%s' not found.", name, ippGetString(uri, 0, NULL));
@@ -8962,6 +8963,7 @@ valid_doc_attributes(
       serverLogClient(SERVER_LOGLEVEL_DEBUG, client, "%s document-format='%s'", op_name, format);
 
       ippAddString(client->request, IPP_TAG_JOB, IPP_TAG_MIMETYPE, "document-format-supplied", NULL, format);
+fprintf(stderr,"HERE  %s\n",format);
     }
   }
   else

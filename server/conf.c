@@ -225,7 +225,11 @@ serverCreateSystem(
 
         if (serverLoadAttributes(filename, &pinfo))
 	{
-          snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
+          //snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
+	  if (!strcmp(dent->filename,"faxout"))
+		  snprintf(resource, sizeof(resource), "/ipp/%s", dent->filename);
+	  else
+		  snprintf(resource, sizeof(resource), "/ipp/print/%s", dent->filename);
 
 	  if ((printer = serverCreatePrinter(resource, dent->filename, dent->filename, &pinfo, 0)) == NULL)
             continue;
@@ -1127,7 +1131,7 @@ attr_cb(ipp_file_t     *f,		/* I - IPP file */
     "printer-current-time",
     "printer-detailed-status-messages",
     "printer-dns-sd-name",
-    "printer-fax-log-uri",
+    //"printer-fax-log-uri",
     "printer-get-attributes-supported",
     "printer-icons",
     "printer-id",

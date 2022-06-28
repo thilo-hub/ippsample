@@ -447,6 +447,13 @@ serverProcessHTTP(
 	  else
 	    uriptr = client->uri + strlen(client->uri);
         }
+        else if (!strncmp(client->uri, "/ipp/faxout/", 12))
+        {
+          if ((uriptr = strchr(client->uri + 5, '/')) != NULL)
+	    *uriptr++ = '\0';
+	  else
+	    uriptr = client->uri + strlen(client->uri);
+        }
         else if (!strncmp(client->uri, "/ipp/print3d/", 13))
         {
           if ((uriptr = strchr(client->uri + 13, '/')) != NULL)
@@ -493,6 +500,13 @@ serverProcessHTTP(
 	  else
 	    uriptr = client->uri + strlen(client->uri);
         }
+        else if (!strncmp(client->uri, "/ipp/faxout/", 12))
+        {
+          if ((uriptr = strchr(client->uri + 5, '/')) != NULL)
+	    *uriptr++ = '\0';
+	  else
+	    uriptr = client->uri + strlen(client->uri);
+        }
         else if (!strncmp(client->uri, "/ipp/print3d/", 13))
         {
           if ((uriptr = strchr(client->uri + 13, '/')) != NULL)
@@ -500,9 +514,11 @@ serverProcessHTTP(
 	  else
 	    uriptr = client->uri + strlen(client->uri);
         }
-        else if (!strcmp(client->uri, "/ipp/print"))
+        else if (!strcmp(client->uri, "/ipp/faxout")){
           uriptr = client->uri + strlen(client->uri);
-        else
+        }else if (!strcmp(client->uri, "/ipp/print")){
+          uriptr = client->uri + strlen(client->uri);
+        }else
           uriptr = NULL;
 
         if (uriptr)
